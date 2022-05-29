@@ -1,6 +1,5 @@
-from __init__ import Test, TestCase
-# from utesting import Test, TestCase (for real using)
-# import asyncio for async testing way
+from utesting import Test, TestCase
+# import asyncio # for async testing way
 
 t = Test()
 
@@ -31,30 +30,36 @@ def func2(a):
 
 @t.mark_test_unit(cases=[TestCase({"a": 1}, 1)], only_errors=True)
 def func3(a):
-    a = a/0
+    a = a / 0
+
+@t.mark_test_unit(cases=[TestCase({"a": 100000}, 100000)], only_time=True)
+def func4(a):
+    result = 1
+    for m in range(1, a + 1):
+        result *= m
+    return result
 
 class A:
 
     c = 2
 
-    def func4(self, a):
+    def func5(self, a):
         return a / self.c
 
 a = A()
 
-t.add_test_unit(a.func4, [TestCase({"a": 1}, 0.5)])
+t.add_test_unit(a.func5, [TestCase({"a": 1}, 0.5)])
 
 cases5 = [TestCase({"a": 5}, 5), TestCase({"a": 15}, 15)]
 
 @t.mark_test_unit(cases=cases5, asynchronous=True)
-async def func5(a):
+async def func6(a):
     if a <= 1: return a
-    else: return await func5(a - 1) + await func5(a - 2)
+    else: return await func6(a - 1) + await func6(a - 2)
+
 
 t.test_all()
-
-# asyncio.run(t.test_all_async()) async testing way
-
+# asyncio.run(t.test_all_async()) # async testing way
 """
 Output:
 ****************************************************************************************************
@@ -65,21 +70,21 @@ CASE 0:
     Correct answer: 100000
     Returned answer: 100000
     Result: PASSED
-    Time: 0.012551069259643555 seconds
+    Time: 0.011008501052856445 seconds
 ----------------------------------------------------------------------------------------------------
 CASE 1:
     Agruments: {'a': 200000}
     Correct answer: 200000
     Returned answer: 200000
     Result: PASSED
-    Time: 0.023479700088500977 seconds
+    Time: 0.022005558013916016 seconds
 ----------------------------------------------------------------------------------------------------
 CASE 2:
     Agruments: {'a': 200000}
     Correct answer: 300000
     Returned answer: 200000
     Result: FAILED
-    Time: 0.02248382568359375 seconds
+    Time: 0.022005796432495117 seconds
 ----------------------------------------------------------------------------------------------------
 ****************************************************************************************************
 UNIT: func2
@@ -106,6 +111,11 @@ CASE 0: ERROR ( division by zero )
 ****************************************************************************************************
 UNIT: func4
 ----------------------------------------------------------------------------------------------------
+CASE 0: TIME ( 2.3135323524475098 )
+----------------------------------------------------------------------------------------------------
+****************************************************************************************************
+UNIT: func5
+----------------------------------------------------------------------------------------------------
 CASE 0:
     Agruments: {'a': 1}
     Correct answer: 0.5
@@ -114,21 +124,21 @@ CASE 0:
     Time: 0.0 seconds
 ----------------------------------------------------------------------------------------------------
 ****************************************************************************************************
-UNIT: func5
+UNIT: func6
 ----------------------------------------------------------------------------------------------------
 CASE 0:
     Agruments: {'a': 5}
     Correct answer: 5
     Returned answer: 5
     Result: PASSED
-    Time: 0.00202178955078125 seconds
+    Time: 0.0020034313201904297 seconds
 ----------------------------------------------------------------------------------------------------
 CASE 1:
     Agruments: {'a': 15}
     Correct answer: 15
     Returned answer: 610
     Result: FAILED
-    Time: 0.010009527206420898 seconds
+    Time: 0.010002613067626953 seconds
 ----------------------------------------------------------------------------------------------------
 ****************************************************************************************************
 NOT ALL TESTS PASSED :(

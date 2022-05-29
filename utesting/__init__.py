@@ -34,11 +34,13 @@ class ResultStates: # class with result states
     passed: ResultState object which means that test passed
     failed: ResultState object which means that test failed by answer
     error: ResultSatet object which means that test failed by some error
+    time: ResultSatet object which means that test was runned to check time
     """
 
     passed: ResultState = ResultState(True, "PASSED")
     failed: ResultState = ResultState(False, "FAILED")
     error: ResultState = ResultState(False, "ERROR")
+    time: ResultState = ResultState(True, "TIME")
 
 class Unit: # class with unit
 
@@ -95,6 +97,7 @@ class TestGroup: # class with test group
     unit: Unit object which will be tested
     cases: list of TestCase objects which will be used for testing unit
     only_errors: bool variable which means will be only testing on errors(without comparing with answer) or general one
+    only_time: bool variable which means will be only testing on time(without comparing with answer) or general one
     no_print: bool variable which means will be printing or not
 
     __init__: method for creating TestGroup object with unit, cases, only_errors and no_print as arguments
@@ -103,15 +106,18 @@ class TestGroup: # class with test group
     unit: Unit = None
     cases: list[TestCase] = []
     only_errors: bool = False
+    only_time: bool = False
     no_print: bool = False
 
     def __init__(self, unit: Unit,
                  cases: list[TestCase],
                  only_errors: bool = False,
+                 only_time: bool = False,
                  no_print: bool = False) -> None:
         self.unit = unit
         self.cases = cases
         self.only_errors = only_errors
+        self.only_time = only_time
         self.no_print = no_print
 
 class TestCaseResult(TestCase): # class with test case result
@@ -161,7 +167,7 @@ class Test: # main class for testing
 
     test: method for testing test group with TestGroup object and output as arguments
     test_async: async version of test method
-    mark_test_unit: method, which should be used as decorator, for marking test unit with TestCase object, asynchronous, only_errors and no_print as arguments and it returns register function
+    mark_test_unit: method, which should be used as decorator, for marking test unit with TestCase object, asynchronous, only_errors, only_time and no_print as arguments and it returns register function
     register: function for registration test group with callback as argument and it returns callback(for working this callback in future)
     add_test_unit: method, same as mark_test_unit, but can't be used as decorator
     test_all: method for running testing all groups with file_name as optional argument and it returns dictionary with TestCaseResult objects connected to their units
@@ -176,16 +182,16 @@ class Test: # main class for testing
     def __output_unit(self, unit: Unit, output: Callable[..., Any] = print) -> None:
         output(f"UNIT: {unit.name}" + ("\n" if output != print else ""))
 
-    def __output_case(self, ind: int, case: TestCaseResult, only_errors: bool = False,  output: Callable[..., Any] = print) -> None:
-        if not only_errors:
+    def __output_case(self, ind: int, case: TestCaseResult, only_errors: bool = False, only_time: bool = False, output: Callable[..., Any] = print) -> None:
+        if only_errors or only_time:
+            output(f"CASE {ind}: {case.result.text}" + ("\n" if output != print else ""))
+        else:
             output(f"CASE {ind}:" + ("\n" if output != print else ""))
             output(f"    Agruments: {case.arguments}" + ("\n" if output != print else ""))
             output(f"    Correct answer: {case.answer}" + ("\n" if output != print else ""))
             output(f"    Returned answer: {case.returned}" + ("\n" if output != print else ""))
             output(f"    Result: {case.result.text}" + ("\n" if output != print else ""))
             output(f"    Time: {case.work_time} seconds" + ("\n" if output != print else ""))
-        else:
-            output(f"CASE {ind}: {case.result.text}" + ("\n" if output != print else ""))
 
     def test(self, group: TestGroup, output: Callable[..., Any]) -> list[TestCaseResult]:
         results: list[TestCaseResult] = []
@@ -193,7 +199,29 @@ class Test: # main class for testing
             self.__output_line("*", output)
             self.__output_unit(group.unit, output)
         ind = 0
-        if group.only_errors:
+        if group.only_errors and group.only_time:
+            for case in group.cases:
+                if not group.no_print:
+                    self.__output_line("-", output)
+                start_time = time.time()
+                try:
+                    if not group.unit.asynchronous:
+                        returned = group.unit.callback(**case.arguments)
+                    else:
+                        loop = asyncio.new_event_loop()
+                        returned = loop.run_until_complete(group.unit.callback(**case.arguments))
+                        loop.close()
+                    work_time = time.time() - start_time
+                    result = TestCaseResult(group.unit, case, None, ResultState(True, f"PASSED, TIME ( {work_time} )"), work_time)
+                    results.append(result)
+                except Exception as err:
+                    work_time = time.time() - start_time
+                    result = TestCaseResult(group.unit, case, None, ResultState(False, f"ERROR ( {err} ), TIME ( {work_time} )"), work_time)
+                    results.append(result)
+                if not group.no_print:
+                    self.__output_case(ind, result, group.only_errors, group.only_time, output)
+                ind += 1
+        elif group.only_errors:
             for case in group.cases:
                 if not group.no_print:
                     self.__output_line("-", output)
@@ -210,7 +238,24 @@ class Test: # main class for testing
                     result = TestCaseResult(group.unit, case, None, ResultState(False, f"ERROR ( {err} )"), None)
                     results.append(result)
                 if not group.no_print:
-                    self.__output_case(ind, result, group.only_errors, output)
+                    self.__output_case(ind, result, group.only_errors, group.only_time, output)
+                ind += 1
+        elif group.only_time:
+            for case in group.cases:
+                if not group.no_print:
+                    self.__output_line("-", output)
+                start_time = time.time()
+                if not group.unit.asynchronous:
+                    returned = group.unit.callback(**case.arguments)
+                else:
+                    loop = asyncio.new_event_loop()
+                    returned = loop.run_until_complete(group.unit.callback(**case.arguments))
+                    loop.close()
+                work_time = time.time() - start_time
+                result = TestCaseResult(group.unit, case, None, ResultState(True, f"TIME ( {work_time} )"), work_time)
+                results.append(result)
+                if not group.no_print:
+                    self.__output_case(ind, result, group.only_errors, group.only_time, output)
                 ind += 1
         else:    
             for case in group.cases:
@@ -239,19 +284,39 @@ class Test: # main class for testing
                     result = TestCaseResult(group.unit, case, returned, ResultStates.failed, work_time)
                     results.append(result)
                 if not group.no_print:
-                    self.__output_case(ind, result, group.only_errors, output)
+                    self.__output_case(ind, result, group.only_errors, group.only_time, output)
                 ind += 1
         if not group.no_print:
             self.__output_line("-", output)
         return results
-    
+
     async def test_async(self, group: TestGroup, output: Callable[..., Any]) -> list[TestCaseResult]:
         results: list[TestCaseResult] = []
         if not group.no_print:
             self.__output_line("*", output)
             self.__output_unit(group.unit, output)
         ind = 0
-        if group.only_errors:
+        if group.only_errors and group.only_time:
+            for case in group.cases:
+                if not group.no_print:
+                    self.__output_line("-", output)
+                start_time = time.time()
+                try:
+                    if not group.unit.asynchronous:
+                        returned = group.unit.callback(**case.arguments)
+                    else:
+                        returned = await group.unit.callback(**case.arguments)
+                    work_time = time.time() - start_time
+                    result = TestCaseResult(group.unit, case, None, ResultState(True, f"PASSED, TIME ( {work_time} )"), work_time)
+                    results.append(result)
+                except Exception as err:
+                    work_time = time.time() - start_time
+                    result = TestCaseResult(group.unit, case, None, ResultState(False, f"ERROR ( {err} ), TIME ( {work_time} )"), work_time)
+                    results.append(result)
+                if not group.no_print:
+                    self.__output_case(ind, result, group.only_errors, group.only_time, output)
+                ind += 1
+        elif group.only_errors:
             for case in group.cases:
                 if not group.no_print:
                     self.__output_line("-", output)
@@ -266,7 +331,22 @@ class Test: # main class for testing
                     result = TestCaseResult(group.unit, case, None, ResultState(False, f"ERROR ( {err} )"), None)
                     results.append(result)
                 if not group.no_print:
-                    self.__output_case(ind, result, group.only_errors, output)
+                    self.__output_case(ind, result, group.only_errors, group.only_time, output)
+                ind += 1
+        elif group.only_time:
+            for case in group.cases:
+                if not group.no_print:
+                    self.__output_line("-", output)
+                start_time = time.time()
+                if not group.unit.asynchronous:
+                        returned = group.unit.callback(**case.arguments)
+                else:
+                    returned = await group.unit.callback(**case.arguments)
+                work_time = time.time() - start_time
+                result = TestCaseResult(group.unit, case, None, ResultState(True, f"TIME ( {work_time} )"), work_time)
+                results.append(result)
+                if not group.no_print:
+                    self.__output_case(ind, result, group.only_errors, group.only_time, output)
                 ind += 1
         else:    
             for case in group.cases:
@@ -293,20 +373,20 @@ class Test: # main class for testing
                     result = TestCaseResult(group.unit, case, returned, ResultStates.failed, work_time)
                     results.append(result)
                 if not group.no_print:
-                    self.__output_case(ind, result, group.only_errors, output)
+                    self.__output_case(ind, result, group.only_errors, group.only_time, output)
                 ind += 1
         if not group.no_print:
             self.__output_line("-", output)
         return results
 
-    def mark_test_unit(self, cases: list[TestCase], asynchronous: bool = False, only_errors: bool = False, no_print: bool = False) -> Callable[..., Any]:
-        def register(callback: Callable[..., Any]):
-            self.groups.append(TestGroup(Unit(callback, asynchronous), cases, only_errors, no_print))
+    def mark_test_unit(self, cases: list[TestCase], asynchronous: bool = False, only_errors: bool = False, only_time: bool = False, no_print: bool = False) -> Callable[..., Any]:
+        def register(callback: Callable[..., Any]) -> Callable[..., Any]:
+            self.groups.append(TestGroup(Unit(callback, asynchronous), cases, only_errors, only_time, no_print))
             return callback
         return register
 
-    def add_test_unit(self, callback: Callable[..., Any], cases: list[TestCase], asynchronous: bool = False, only_errors: bool = False, no_print: bool = False) -> None:
-        self.groups.append(TestGroup(Unit(callback, asynchronous), cases, only_errors, no_print))
+    def add_test_unit(self, callback: Callable[..., Any], cases: list[TestCase], asynchronous: bool = False, only_errors: bool = False, only_time: bool = False, no_print: bool = False) -> None:
+        self.groups.append(TestGroup(Unit(callback, asynchronous), cases, only_errors, only_time, no_print))
 
     def test_all(self, file_name: str = "") -> dict:
         results: dict = {}
