@@ -10,7 +10,7 @@ Python module for unit testing
 
 `@mark_test_unit(cases, asynchronous, only_errors, no_print)` — decorator for marking test unit
 
-`add_test_unit(callback, asynchronous, only_errors, no_print)` — same as mark_test_unit, but can't be used as decorator
+`add_test_unit(callback, cases, asynchronous, only_errors, no_print)` — same as mark_test_unit, but can't be used as decorator
 
 `test_all(file_name)` — running testing all marked(added) units
 
