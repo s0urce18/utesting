@@ -8,9 +8,9 @@ Python module for unit testing
 
 `test_async(group, output)` — async version of test
 
-`@mark_test_unit(cases, only_errors, no_print)` — decorator for marking test unit
+`@mark_test_unit(cases, asynchronou, only_errors, no_print)` — decorator for marking test unit
 
-`add_test_unit(callback, only_errors, no_print)` — same as mark_test_unit, but can't be used as decorator
+`add_test_unit(callback, asynchronous, only_errors, no_print)` — same as mark_test_unit, but can't be used as decorator
 
 `test_all(file_name)` — running testing all marked(added) units
 
