@@ -191,7 +191,7 @@ class Test: # main class for testing
             output(f"    Correct answer: {case.answer}" + ("\n" if output != print else ""))
             output(f"    Returned answer: {case.returned}" + ("\n" if output != print else ""))
             output(f"    Result: {case.result.text}" + ("\n" if output != print else ""))
-            output(f"    Time: {case.work_time} seconds" + ("\n" if output != print else ""))
+            output(f"    Time: {case.work_time if case.work_time >= 1 else case.work_time * 1000} {'s' if case.work_time >= 1 else 'ms'}" + ("\n" if output != print else ""))
 
     def test(self, group: TestGroup, output: Callable[..., Any]) -> list[TestCaseResult]:
         results: list[TestCaseResult] = []
@@ -212,11 +212,11 @@ class Test: # main class for testing
                         returned = loop.run_until_complete(group.unit.callback(**case.arguments))
                         loop.close()
                     work_time = time.time() - start_time
-                    result = TestCaseResult(group.unit, case, None, ResultState(True, f"PASSED, TIME ( {work_time} )"), work_time)
+                    result = TestCaseResult(group.unit, case, None, ResultState(True, f"PASSED, TIME ( {work_time if work_time >= 1 else work_time * 1000} {'s' if work_time >= 1 else 'ms'} )"), work_time)
                     results.append(result)
                 except Exception as err:
                     work_time = time.time() - start_time
-                    result = TestCaseResult(group.unit, case, None, ResultState(False, f"ERROR ( {err} ), TIME ( {work_time} )"), work_time)
+                    result = TestCaseResult(group.unit, case, None, ResultState(False, f"ERROR ( {err} ), TIME ( {work_time if work_time >= 1 else work_time * 1000} {'s' if work_time >= 1 else 'ms'} )"), work_time)
                     results.append(result)
                 if not group.no_print:
                     self.__output_case(ind, result, group.only_errors, group.only_time, output)
@@ -252,7 +252,7 @@ class Test: # main class for testing
                     returned = loop.run_until_complete(group.unit.callback(**case.arguments))
                     loop.close()
                 work_time = time.time() - start_time
-                result = TestCaseResult(group.unit, case, None, ResultState(True, f"TIME ( {work_time} )"), work_time)
+                result = TestCaseResult(group.unit, case, None, ResultState(True, f"TIME ( {work_time if work_time >= 1 else work_time * 1000} {'s' if work_time >= 1 else 'ms'} )"), work_time)
                 results.append(result)
                 if not group.no_print:
                     self.__output_case(ind, result, group.only_errors, group.only_time, output)
@@ -307,11 +307,11 @@ class Test: # main class for testing
                     else:
                         returned = await group.unit.callback(**case.arguments)
                     work_time = time.time() - start_time
-                    result = TestCaseResult(group.unit, case, None, ResultState(True, f"PASSED, TIME ( {work_time} )"), work_time)
+                    result = TestCaseResult(group.unit, case, None, ResultState(True, f"PASSED, TIME ( {work_time if work_time >= 1 else work_time * 1000} {'s' if work_time >= 1 else 'ms'} )"), work_time)
                     results.append(result)
                 except Exception as err:
                     work_time = time.time() - start_time
-                    result = TestCaseResult(group.unit, case, None, ResultState(False, f"ERROR ( {err} ), TIME ( {work_time} )"), work_time)
+                    result = TestCaseResult(group.unit, case, None, ResultState(False, f"ERROR ( {err} ), TIME ( {work_time if work_time >= 1 else work_time * 1000} {'s' if work_time >= 1 else 'ms'} )"), work_time)
                     results.append(result)
                 if not group.no_print:
                     self.__output_case(ind, result, group.only_errors, group.only_time, output)
@@ -343,7 +343,7 @@ class Test: # main class for testing
                 else:
                     returned = await group.unit.callback(**case.arguments)
                 work_time = time.time() - start_time
-                result = TestCaseResult(group.unit, case, None, ResultState(True, f"TIME ( {work_time} )"), work_time)
+                result = TestCaseResult(group.unit, case, None, ResultState(True, f"TIME ( {work_time if work_time >= 1 else work_time * 1000} {'s' if work_time >= 1 else 'ms'} )"), work_time)
                 results.append(result)
                 if not group.no_print:
                     self.__output_case(ind, result, group.only_errors, group.only_time, output)
