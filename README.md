@@ -1,6 +1,6 @@
-# utesting
+# utesting-py
 
-GitHub: https://github.com/s0urce18/utesting
+GitHub: https://github.com/s0urce18/utesting-py
 
 Python module for unit testing
 
