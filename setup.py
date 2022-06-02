@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="utesting",
-    version="2.2.1",
+    version="2.2.2",
     author="s0urce",
     author_email="boyarkin.gleb@gmail.com",
     description="Module for unit testing",
