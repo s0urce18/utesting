@@ -1,8 +1,30 @@
 # utesting-py
 
-GitHub: https://github.com/s0urce18/utesting-py
+**GitHub:** https://github.com/s0urce18/utesting-py
+
+**PyPi:** https://pypi.org/project/utesting/
 
 Python module for unit testing
+
+## Installation:
+
+```console
+pip install utesting
+```
+
+## Importing:
+
+```py
+from utesting import ResultState # not necessary
+from utesting import ResultStates # not necessary
+from utesting import Unit # not necessary
+from utesting import TestCase # necessary (for creating test cases)
+from utesting import TestGroup # not necessary
+from utesting import TestCaseResult # not necessary
+from utesting import Test # necessary (for additing and running testing)
+```
+
+## Using:
 
 `test(group, output)` — test test group
 
