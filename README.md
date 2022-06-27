@@ -1,6 +1,6 @@
 # utesting-py
 
-**GitHub:** https://github.com/s0urce18/utesting-py
+**GitHub:** https://github.com/s0urcedev/utesting-py
 
 **PyPi:** https://pypi.org/project/utesting/
 
